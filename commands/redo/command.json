@@ -1,0 +1,5 @@
+{
+  "name": "redo",
+  "summary": "Restore the last tldt undo --safe snapshot",
+  "description": "Re-apply the most recent safe undo (working tree and/or commit)."
+}

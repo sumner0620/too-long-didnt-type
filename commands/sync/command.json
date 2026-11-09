@@ -1,0 +1,5 @@
+{
+  "name": "sync",
+  "summary": "Update current branch from the latest base",
+  "description": "Fetch and rebase/merge the base branch into your current branch, optionally reinstalling when the lockfile changes."
+}

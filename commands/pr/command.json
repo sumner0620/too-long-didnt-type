@@ -1,0 +1,5 @@
+{
+  "name": "pr",
+  "summary": "Push branch and open a pull request",
+  "description": "Push the current branch and create a GitHub PR in one step (requires gh)."
+}

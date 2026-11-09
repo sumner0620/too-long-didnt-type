@@ -9,7 +9,7 @@
 
 ## Conventions
 
-- Prefer a **short verb or noun** users will remember (`tree`, later maybe `pr`, `ship`, `bisect`, …)
+- Prefer a **short verb or noun** users will remember (`tree`, `pr`, `sync`, `undo`, …)
 - Put the painful multi-step flow behind one obvious command
 - Support `--help` on every command
 - Keep repo-specific behavior in optional `.tldt.json`, not hard-coded
