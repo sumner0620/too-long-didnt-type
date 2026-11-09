@@ -12,6 +12,10 @@
     "tldt"
   ],
   "license": "MIT",
+  "author": {
+    "name": "Doug Sumner",
+    "url": "https://github.com/sumner0620"
+  },
   "type": "module",
   "bin": {
     "tldt": "bin/tldt.js",
@@ -30,12 +34,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dougsumner/too-long-didnt-type.git"
+    "url": "git+https://github.com/sumner0620/too-long-didnt-type.git"
   },
   "bugs": {
-    "url": "https://github.com/dougsumner/too-long-didnt-type/issues"
+    "url": "https://github.com/sumner0620/too-long-didnt-type/issues"
   },
-  "homepage": "https://github.com/dougsumner/too-long-didnt-type#readme",
+  "homepage": "https://github.com/sumner0620/too-long-didnt-type#readme",
   "scripts": {
     "test": "node --test test/*.test.js",
     "tldt": "node bin/tldt.js"

@@ -50,7 +50,7 @@ Examples:
   tldt tree --list
   tldt tree rm feature/login
 
-Docs: https://github.com/dougsumner/too-long-didnt-type
+Docs: https://github.com/sumner0620/too-long-didnt-type
 Add a shortcut: see docs/ADDING-COMMANDS.md`);
 }
 
