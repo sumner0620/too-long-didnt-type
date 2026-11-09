@@ -1,0 +1,11 @@
+{
+  "editor": "cursor",
+  "tree": {
+    "defaultBase": "main",
+    "installCommand": "npm install",
+    "devCommand": "PORT={{port}} npm run dev -- --port {{port}}",
+    "copyEnv": true,
+    "portStart": 3001,
+    "portEnd": 3099
+  }
+}

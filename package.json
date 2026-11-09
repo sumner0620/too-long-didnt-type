@@ -1,0 +1,43 @@
+{
+  "name": "too-long-didnt-type",
+  "version": "0.1.0",
+  "description": "Short, memorable commands for long developer workflows. Start with parallel git worktrees + free-port dev servers.",
+  "keywords": [
+    "cli",
+    "developer-tools",
+    "git",
+    "worktree",
+    "dx",
+    "shortcuts",
+    "tldt"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "tldt": "bin/tldt.js",
+    "too-long-didnt-type": "bin/tldt.js"
+  },
+  "files": [
+    "bin",
+    "lib",
+    "commands",
+    "docs",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dougsumner/too-long-didnt-type.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dougsumner/too-long-didnt-type/issues"
+  },
+  "homepage": "https://github.com/dougsumner/too-long-didnt-type#readme",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "tldt": "node bin/tldt.js"
+  }
+}

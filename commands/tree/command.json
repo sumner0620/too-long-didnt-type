@@ -1,0 +1,5 @@
+{
+  "name": "tree",
+  "summary": "Parallel git worktree + free-port dev server",
+  "description": "Create, list, and remove parallel checkouts so you can work on two branches at once without stashing or switching."
+}
