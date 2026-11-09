@@ -60,9 +60,11 @@ require_git_repo
 BRANCH="$(git branch --show-current 2>/dev/null || true)"
 HEAD_BEFORE="$(git rev-parse HEAD)"
 HEAD_SHORT="$(git rev-parse --short HEAD)"
+HEAD_SUBJECT="$(git log -1 --pretty=%s HEAD)"
 KIND=""
 STASH_SHA=""
 MESSAGE=""
+CHANGE_SUMMARY=""
 
 save_safe_snapshot() {
   local kind="$1" stash_sha="${2:-}" message="$3"
@@ -88,13 +90,12 @@ save_safe_snapshot() {
 if git_is_dirty; then
   KIND="working-tree"
   MESSAGE="Discard working tree changes relative to ${HEAD_SHORT}"
+  CHANGE_SUMMARY="$(describe_working_tree)"
 
   if [[ "${SAFE}" -eq 1 ]]; then
     echo "→ Saving working tree (including untracked)…"
-    # stash push -u: tracked + untracked (not ignored)
     git stash push -u -m "tldt undo ${HEAD_SHORT}" >/dev/null
     STASH_SHA="$(git rev-parse refs/stash)"
-    # Tree is now clean via stash; still ensure ignored leftovers aren't required.
     echo "→ Working tree restored to ${HEAD_SHORT}"
     save_safe_snapshot "${KIND}" "${STASH_SHA}" "${MESSAGE}"
   else
@@ -103,6 +104,13 @@ if git_is_dirty; then
     git clean -fd
     echo "→ Working tree restored to ${HEAD_SHORT}"
   fi
+
+  echo
+  echo "Done."
+  echo "Changed:"
+  echo "  Discarded working tree changes (HEAD unchanged)"
+  echo "  HEAD ${HEAD_SHORT} — ${HEAD_SUBJECT}"
+  echo "${CHANGE_SUMMARY}"
 else
   KIND="commit"
   if ! git rev-parse --verify --quiet HEAD~1 >/dev/null; then
@@ -117,11 +125,12 @@ else
   fi
 
   PARENT="$(git rev-parse --short HEAD~1)"
+  PARENT_SUBJECT="$(git log -1 --pretty=%s HEAD~1)"
   SUBJECT="$(git log -1 --pretty=%s HEAD)"
   MESSAGE="Uncommit ${HEAD_SHORT}: ${SUBJECT}"
+  CHANGE_SUMMARY="$(describe_commit HEAD)"
 
   if [[ "${SAFE}" -eq 1 ]]; then
-    # Record current HEAD; hard reset leaves the commit recoverable by sha.
     echo "→ Uncommitting ${HEAD_SHORT} (safe)…"
     git reset --hard HEAD~1
     save_safe_snapshot "${KIND}" "" "${MESSAGE}"
@@ -130,10 +139,15 @@ else
     git reset --hard HEAD~1
   fi
   echo "→ Now at ${PARENT} (clean)"
+
+  echo
+  echo "Done."
+  echo "Changed:"
+  echo "  Uncommitted ${HEAD_SHORT} — ${SUBJECT}"
+  echo "  HEAD ${HEAD_SHORT} → ${PARENT} — ${PARENT_SUBJECT}"
+  echo "${CHANGE_SUMMARY}"
 fi
 
-echo
-echo "Done."
 if [[ "${SAFE}" -eq 1 ]]; then
   echo "  Redo with:  tldt redo"
 else

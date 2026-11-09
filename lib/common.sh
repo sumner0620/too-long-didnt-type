@@ -149,6 +149,78 @@ commit_is_on_remote() {
   git branch -r --contains "${sha}" 2>/dev/null | grep -q .
 }
 
+# Human-readable summary of current dirty working tree (staged/unstaged/untracked).
+describe_working_tree() {
+  local line path status_xy x y label
+  local staged=0 unstaged=0 untracked=0
+  local lines=()
+
+  while IFS= read -r line || [[ -n "${line}" ]]; do
+    [[ -n "${line}" ]] || continue
+    status_xy="${line:0:2}"
+    path="${line:3}"
+    # Rename/copy: "R  old -> new" — show the new path.
+    if [[ "${path}" == *" -> "* ]]; then
+      path="${path##* -> }"
+    fi
+    x="${status_xy:0:1}"
+    y="${status_xy:1:1}"
+
+    if [[ "${status_xy}" == "??" ]]; then
+      untracked=$((untracked + 1))
+      lines+=("    untracked  ${path}")
+    elif [[ "${status_xy}" == "!!" ]]; then
+      continue
+    else
+      if [[ "${x}" != " " && "${x}" != "?" ]]; then
+        staged=$((staged + 1))
+        case "${x}" in
+          A) label="staged new" ;;
+          M) label="staged mod" ;;
+          D) label="staged del" ;;
+          R) label="staged ren" ;;
+          C) label="staged cpy" ;;
+          *) label="staged (${x})" ;;
+        esac
+        lines+=("    ${label}  ${path}")
+      fi
+      if [[ "${y}" != " " && "${y}" != "?" ]]; then
+        unstaged=$((unstaged + 1))
+        case "${y}" in
+          M) label="modified" ;;
+          D) label="deleted" ;;
+          *) label="unstaged (${y})" ;;
+        esac
+        lines+=("    ${label}   ${path}")
+      fi
+    fi
+  done < <(git status --porcelain --untracked-files=normal 2>/dev/null || true)
+
+  if [[ ${#lines[@]} -eq 0 ]]; then
+    echo "  (working tree already clean)"
+    return
+  fi
+
+  echo "  ${staged} staged, ${unstaged} unstaged, ${untracked} untracked"
+  local entry
+  for entry in "${lines[@]}"; do
+    echo "${entry}"
+  done
+}
+
+# One-line + file list for a commit relative to its first parent (or empty tree).
+describe_commit() {
+  local sha="$1"
+  local short subject stats
+  short="$(git rev-parse --short "${sha}")"
+  subject="$(git log -1 --pretty=%s "${sha}")"
+  echo "  ${short} — ${subject}"
+  stats="$(git show --stat --format="" "${sha}" 2>/dev/null | sed '/^$/d' | sed 's/^/    /' || true)"
+  if [[ -n "${stats}" ]]; then
+    echo "${stats}"
+  fi
+}
+
 load_repo_config() {
   # Optional per-repo config: <primary>/.tldt.json
   local primary config

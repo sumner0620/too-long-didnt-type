@@ -31,3 +31,5 @@ tldt undo --safe --force
 tldt redo
 tldt redo --force
 ```
+
+After each run, the command prints a **Changed** summary: discarded files for working-tree undos, or the removed/restored commit (and its diffstat) for commit undos.
