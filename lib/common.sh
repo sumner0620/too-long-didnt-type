@@ -66,6 +66,89 @@ worktree_dir_for_slug() {
   echo "${parent}/${base}-${slug}"
 }
 
+require_git_repo() {
+  if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    echo "Error: not inside a git repository" >&2
+    exit 1
+  fi
+}
+
+current_branch() {
+  local branch
+  branch="$(git branch --show-current 2>/dev/null || true)"
+  if [[ -z "${branch}" ]]; then
+    echo "Error: detached HEAD — check out a branch first" >&2
+    exit 1
+  fi
+  echo "${branch}"
+}
+
+git_is_dirty() {
+  # Staged, unstaged, or untracked (not ignored).
+  [[ -n "$(git status --porcelain --untracked-files=normal 2>/dev/null)" ]]
+}
+
+git_dir() {
+  git rev-parse --git-dir
+}
+
+tldt_state_dir() {
+  local dir
+  dir="$(git_dir)/tldt"
+  mkdir -p "${dir}"
+  echo "${dir}"
+}
+
+undo_stack_file() {
+  echo "$(tldt_state_dir)/undo-stack.json"
+}
+
+# Push a JSON object (single line) onto the undo stack.
+undo_stack_push() {
+  local entry="$1"
+  local file
+  file="$(undo_stack_file)"
+  if [[ ! -f "${file}" ]]; then
+    printf '[\n%s\n]\n' "${entry}" >"${file}"
+    return
+  fi
+  node -e '
+    const fs = require("fs");
+    const file = process.argv[1];
+    const entry = JSON.parse(process.argv[2]);
+    let stack = [];
+    try { stack = JSON.parse(fs.readFileSync(file, "utf8")); } catch {}
+    if (!Array.isArray(stack)) stack = [];
+    stack.push(entry);
+    fs.writeFileSync(file, JSON.stringify(stack, null, 2) + "\n");
+  ' "${file}" "${entry}"
+}
+
+# Pop and print the last undo stack entry as JSON. Exit 1 if empty.
+undo_stack_pop() {
+  local file
+  file="$(undo_stack_file)"
+  if [[ ! -f "${file}" ]]; then
+    return 1
+  fi
+  node -e '
+    const fs = require("fs");
+    const file = process.argv[1];
+    let stack = [];
+    try { stack = JSON.parse(fs.readFileSync(file, "utf8")); } catch {}
+    if (!Array.isArray(stack) || stack.length === 0) process.exit(1);
+    const entry = stack.pop();
+    fs.writeFileSync(file, JSON.stringify(stack, null, 2) + "\n");
+    process.stdout.write(JSON.stringify(entry));
+  ' "${file}"
+}
+
+commit_is_on_remote() {
+  local sha="$1"
+  # True if any remote-tracking ref contains this commit.
+  git branch -r --contains "${sha}" 2>/dev/null | grep -q .
+}
+
 load_repo_config() {
   # Optional per-repo config: <primary>/.tldt.json
   local primary config
@@ -78,6 +161,9 @@ load_repo_config() {
   TLDT_EDITOR="${TLDT_EDITOR:-${TLDT_WORKTREE_EDITOR:-}}"
   TLDT_PORT_START="${TLDT_PORT_START:-3001}"
   TLDT_PORT_END="${TLDT_PORT_END:-3099}"
+  TLDT_PR_DRAFT="${TLDT_PR_DRAFT:-0}"
+  TLDT_SYNC_STRATEGY="${TLDT_SYNC_STRATEGY:-rebase}"
+  TLDT_SYNC_REINSTALL="${TLDT_SYNC_REINSTALL:-1}"
 
   if [[ -f "${config}" ]] && command -v node >/dev/null 2>&1; then
     eval "$(
@@ -85,14 +171,22 @@ load_repo_config() {
         const fs = require("fs");
         const c = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
         const t = c.tree || {};
+        const pr = c.pr || {};
+        const sync = c.sync || {};
         const esc = (v) => String(v ?? "").replace(/"/g, "\\\"");
-        if (t.defaultBase) console.log(`TLDT_DEFAULT_BASE="${esc(t.defaultBase)}"`);
+        const sharedBase = c.defaultBase || t.defaultBase;
+        if (sharedBase) console.log(`TLDT_DEFAULT_BASE="${esc(sharedBase)}"`);
         if (t.installCommand) console.log(`TLDT_INSTALL_CMD="${esc(t.installCommand)}"`);
         if (t.devCommand) console.log(`TLDT_DEV_CMD="${esc(t.devCommand)}"`);
         if (t.copyEnv === false) console.log(`TLDT_COPY_ENV="0"`);
         if (t.portStart) console.log(`TLDT_PORT_START="${esc(t.portStart)}"`);
         if (t.portEnd) console.log(`TLDT_PORT_END="${esc(t.portEnd)}"`);
         if (c.editor) console.log(`TLDT_EDITOR="${esc(c.editor)}"`);
+        if (pr.defaultBase) console.log(`TLDT_PR_BASE="${esc(pr.defaultBase)}"`);
+        if (pr.draft === true) console.log(`TLDT_PR_DRAFT="1"`);
+        if (sync.defaultBase) console.log(`TLDT_SYNC_BASE="${esc(sync.defaultBase)}"`);
+        if (sync.strategy) console.log(`TLDT_SYNC_STRATEGY="${esc(sync.strategy)}"`);
+        if (sync.reinstall === false) console.log(`TLDT_SYNC_REINSTALL="0"`);
       ' "${config}"
     )"
   fi

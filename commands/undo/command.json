@@ -1,0 +1,5 @@
+{
+  "name": "undo",
+  "summary": "Restore a clean last-commit state (optional safe/redo)",
+  "description": "Discard staged/unstaged work, or uncommit the latest local commit. Use --safe to save a snapshot for tldt redo."
+}

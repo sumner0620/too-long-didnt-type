@@ -4,7 +4,6 @@
 
 **Main features:**
 - A tiny CLI (`tldt`) that grows with new shortcuts over time
-- First shortcut: **`tldt tree`** — parallel git worktrees + free-port dev servers in one command
 - Works in **any** git repo (not tied to a specific company or stack)
 - Optional per-repo config via `.tldt.json`
 - Designed so new shortcuts are just a folder under `commands/`
@@ -22,7 +21,9 @@ tldt help
 tldt commands
 ```
 
-## First shortcut: `tree`
+## Shortcuts
+
+### `tree` — parallel worktrees + free-port dev servers
 
 ```bash
 tldt tree feature/login          # new worktree + free port + npm install + dev
@@ -32,15 +33,65 @@ tldt tree rm feature/login       # tear down (stops the server too)
 
 Full docs: [docs/tree.md](docs/tree.md)
 
-## Adding more shortcuts
+### `pr` — push + open a pull request
 
-This package is meant to keep growing — PR flows, release checklists, env bootstrap, whatever you type too often.
+```bash
+tldt pr                          # push branch, create PR (requires gh)
+tldt pr "Add login flow"
+tldt pr --draft --fill
+```
+
+Full docs: [docs/pr.md](docs/pr.md)
+
+### `sync` — update from the latest base branch
+
+```bash
+tldt sync                        # fetch + rebase onto origin/main
+tldt sync develop --merge
+```
+
+Full docs: [docs/sync.md](docs/sync.md)
+
+### `undo` / `redo` — get back to a clean last commit
+
+```bash
+tldt undo                        # discard dirty work, or uncommit last local commit
+tldt undo --safe                 # same, but snapshot for redo
+tldt redo                        # restore last --safe undo
+```
+
+Full docs: [docs/undo.md](docs/undo.md)
+
+## Adding more shortcuts
 
 See [docs/ADDING-COMMANDS.md](docs/ADDING-COMMANDS.md).
 
 ## Optional repo config
 
-Drop a `.tldt.json` in a project root to override defaults (base branch, install/dev commands, ports, editor). Example in [docs/tree.md](docs/tree.md).
+Drop a `.tldt.json` in a project root to override defaults:
+
+```json
+{
+  "editor": "cursor",
+  "tree": {
+    "defaultBase": "main",
+    "installCommand": "npm install",
+    "devCommand": "PORT={{port}} npm run dev -- --port {{port}}",
+    "copyEnv": true,
+    "portStart": 3001,
+    "portEnd": 3099
+  },
+  "pr": {
+    "defaultBase": "main",
+    "draft": false
+  },
+  "sync": {
+    "defaultBase": "main",
+    "strategy": "rebase",
+    "reinstall": true
+  }
+}
+```
 
 ## Development
 
@@ -48,7 +99,7 @@ Drop a `.tldt.json` in a project root to override defaults (base branch, install
 git clone <this-repo>
 cd too-long-didnt-type
 npm link          # puts `tldt` on your PATH from this checkout
-tldt tree --help
+tldt commands
 ```
 
 ## License

@@ -47,8 +47,9 @@ Commands:`);
   console.log(`
 Examples:
   tldt tree feature/login
-  tldt tree --list
-  tldt tree rm feature/login
+  tldt pr --draft --fill
+  tldt sync
+  tldt undo --safe && tldt redo
 
 Docs: https://github.com/sumner0620/too-long-didnt-type
 Add a shortcut: see docs/ADDING-COMMANDS.md`);

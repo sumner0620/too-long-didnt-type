@@ -7,5 +7,14 @@
     "copyEnv": true,
     "portStart": 3001,
     "portEnd": 3099
+  },
+  "pr": {
+    "defaultBase": "main",
+    "draft": false
+  },
+  "sync": {
+    "defaultBase": "main",
+    "strategy": "rebase",
+    "reinstall": true
   }
 }
